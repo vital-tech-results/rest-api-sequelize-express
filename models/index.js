@@ -1,5 +1,6 @@
 const Sequelize = require('sequelize');
-// const models = require('./models');
+
+
 
 const sequelize = new Sequelize({
     dialect: 'sqlite',
@@ -14,6 +15,10 @@ const db = {
     models: {},
 };
 
+
+db.models.Course = require('./course')(sequelize);
+
+db.models.User = require('./user')(sequelize);
 
 /**
  * Use the authenticate() method to test the connection to the database.

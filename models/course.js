@@ -28,36 +28,36 @@ module.exports = (sequelize) => {
             type: Sequelize.INTEGER,
             foreignKey: true,
         },
-        //(String)
+        //(STRING)
         title: {
-            type: Sequelize.String,
+            type: Sequelize.STRING,
         },
         //(Text)
         description: {
             type: Sequelize.TEXT,
         },
-        //(String, nullable)
+        //(STRING, nullable)
         estimatedTime: {
-            type: Sequelize.String,
+            type: Sequelize.STRING,
             allowNull: true,
         },
-        //(String, nullable)
+        //(STRING, nullable)
         materialsNeeded: {
-            type: Sequelize.String,
+            type: Sequelize.STRING,
             allowNull: true,
         },
 
     }, { sequelize });
 
-    // Course.associate = (models) => {
-    //     Course.belongsTo(models.User, {
-    //         as: 'user',
-    //         foreignKey: {
-    //             fieldName: 'userId',
-    //             allowNull: false,
-    //         },
-    //     });
-    // };
+    Course.associate = (models) => {
+        Course.belongsTo(models.User, {
+            as: 'user',
+            foreignKey: {
+                fieldName: 'userId',
+                allowNull: false,
+            },
+        });
+    };
 
     return Course;
 };
