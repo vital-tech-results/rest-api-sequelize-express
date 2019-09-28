@@ -28,17 +28,16 @@ module.exports = (sequelize) => {
         },
 
     }, {
-        tableName: 'Users',
-        freezeTableName: true,
+
         sequelize
 
     });
 
     User.associate = (models) => {
         User.hasMany(models.User, {
-            as: 'user',
+            // as: 'user',
             foreignKey: {
-                fieldName: 'userId',
+                fieldName: 'id',
                 allowNull: false,
             },
         });

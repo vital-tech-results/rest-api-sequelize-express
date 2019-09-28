@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const app = express();
 const bodyParser = require('body-parser');
-const { models } = require('../models');
+const { models } = require('../db');
 // const methodOverride = require('method-override');
 // app.use(methodOverride('_method'));
 
@@ -11,14 +10,14 @@ const { models } = require('../models');
  * https://gist.github.com/vapurrmaid/a111bf3fc0224751cb2f76532aac2465
  * */
 // get list of ALL users currently in database
-app.get('/users', (req, res) => {
-    models.User.findAll({}
+router.get('/', (req, res) => {
+    models.Course.findAll({}
     )
-        .then(user => {
-            res.send("all users");
+        .then(course => {
+            res.json({ course: course });
         });
-    // res.send("all users");
+
 });
 
 
-module.exports = app;
+module.exports = router;

@@ -2,9 +2,9 @@
 // load modules
 const express = require('express');
 const morgan = require('morgan');
-const apiRouter = require('./routes/api');
+const apiRouter = require('./routes/users');
 const indexRouter = require('./routes/index');
-
+const courseRouter = require('./routes/courses');
 // const bodyParser = require('body-parser');
 
 
@@ -17,8 +17,9 @@ const app = express();
 // setup morgan which gives us http request logging
 app.use(morgan('dev'));
 
-app.use('/', indexRouter)
-app.use('/api', apiRouter);
+app.use('/api', indexRouter);
+app.use('/api/users', apiRouter);
+app.use('/api/courses', courseRouter);
 
 // TODO setup your api routes here
 
