@@ -68,22 +68,3 @@ const server = app.listen(app.get('port'), () => {
 });
 
 
-/**
- * global error handling
- */
-
-/*
-router.use((req, res, next) => {
-   const error = new Error('error handler');
-   error.status(404);
-   next(error);
-});
-router.use((error, req, res, next) => {
-   req.status(error.status || 500);
-   res.json({
-       error: {
-           message: error.message
-       }
-   });
-});
-*/
