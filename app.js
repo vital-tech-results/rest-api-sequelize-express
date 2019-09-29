@@ -5,7 +5,7 @@ const morgan = require('morgan');
 const apiRouter = require('./routes/users');
 const indexRouter = require('./routes/index');
 const courseRouter = require('./routes/courses');
-// const bodyParser = require('body-parser');
+const bodyParser = require('body-parser');
 
 
 // variable to enable global error logging
@@ -13,6 +13,16 @@ const enableGlobalErrorLogging = process.env.ENABLE_GLOBAL_ERROR_LOGGING === 'tr
 
 // create the Express app
 const app = express();
+
+
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// when posting new item to DB "need to move your body parsing middleware before your routes so that the request body is parsed first before executing your route handlers:" see: https://stackoverflow.com/questions/39409982/node-js-cannot-read-property-39firstname39-of-undefined
+
+app.use(bodyParser.json({ limit: '100mb' }));
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // setup morgan which gives us http request logging
 app.use(morgan('dev'));
@@ -56,3 +66,24 @@ app.set('port', process.env.PORT || 5000);
 const server = app.listen(app.get('port'), () => {
   console.log(`Express server is listening on port ${server.address().port}`);
 });
+
+
+/**
+ * global error handling
+ */
+
+/*
+router.use((req, res, next) => {
+   const error = new Error('error handler');
+   error.status(404);
+   next(error);
+});
+router.use((error, req, res, next) => {
+   req.status(error.status || 500);
+   res.json({
+       error: {
+           message: error.message
+       }
+   });
+});
+*/
