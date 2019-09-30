@@ -55,21 +55,22 @@ router.get('/', asyncHandler(async (req, res) => {
     const check = (name, pass) => {
         var valid = true;
         // Simple method to prevent short-circut and use timing-safe compare
-        valid = compare(name, 'user.name') && valid;
-        valid = compare(pass, 'user.password') && valid;
+        valid = compare(name, user.name) && valid;
+        valid = compare(pass, user.pass) && valid;
         return valid;
     };
-    const credentials = auth(req);
+
+    const user = auth(req);
     // Check credentials
-    if (!credentials || !check(credentials.name, credentials.pass)) {
+    if (!user || !check(user.name, user.pass)) {
         res.statusCode = 401;
         res.setHeader('WWW-Authenticate', 'Basic realm="example"');
-        res.end('Access denied');
+        res.end('Access denied. Your credentials are not valid.');
     } else {
-        await models.User.find({
+        await models.User.findAll({
             where: {
                 emailAddress: user.name,
-                    password: user.password,
+                password: user.pass,
             }
         })
             .then(user => {
