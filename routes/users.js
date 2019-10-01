@@ -34,44 +34,46 @@ const asyncHandler = (cb) => async (req, res, next) => {
 
 
 
-
-const authenticateUser = (req, res, next) => {
+const authenticateUser =  (req, res, next) => {
     let message = null;
 
+    // Get the user's credentials from the Authorization header.
     const credentials = auth(req);
 
-    if (credentials) {
-        const user = models.User.findAll({
-            limit: 1,
-            where: {
-                emailAddress: credentials.name,
-                password: credentials.pass,
+
+
+        if (credentials) {
+            // Look for a user whose `emailAddress` matches the credentials `name` property.
+            const user =  models.User.findAll({
+                limit: 1,
+                where: {
+                    emailAddress: credentials.name,
+                    password: credentials.pass,
+                },
+
+            });
+
+            if (user) {
+                const authenticated = bcrypt.compareSync(credentials.pass, user.password);
+                if (authenticated) {
+                    console.log(`Authentication successful for emailAddress: ${user.emailAddress}`);
+                    req.currentUser = user;
+                } else {
+                    message = `Authentication failure for emailAddress: ${user.emailAddress}`;
+                }
+            } else {
+                message = `User not found for emailAddress: ${credentials.name}`;
             }
-        });
-        console.log("this is user.password:", credentials.name);
-        if (user) {
-            // const authenticated = bcrypt.compareSync(credentials.pass, user.password);
-
-            // if (authenticated) {
-            //     console.log(`Authentication successful for username: ${user.emailAddress}`);
-            //     req.currentUser = user;
-            // } else {
-            //     message = `Authentication failure for username: ${credentials.name}`;
-            // }
-            console.log(user.emailAddress)
         } else {
-            message = `User not found for username: ${credentials.name}`;
+            message = 'Auth header not found';
         }
-    } else {
-        message = 'Auth header not found';
-    }
 
-    if (message) {
-        console.warn(message);
-        res.status(401).json({ message: `Access Denied` });
-    } else {
-        next();
-    }
+        if (message) {
+            console.warn(message);
+            res.status(401).json({ message: 'Access Denied' });
+        } else {
+            next();
+        }
 };
 
 /** ADAPTED FROM
@@ -112,22 +114,18 @@ router.get('/', authenticateUser, (req, res) => {
     res.send('ok from line 110').end();
     // res.json({
     //     name: user.name,
-    //     username: user.username,
+    //     emailAddress: user.emailAddress,
     // });
-
-
-
-
 
 });
 
 
 //POST /api/users 201 - Creates a user, sets the Location header to "/", and returns no content
-router.post('/', asyncHandler(async (req, res) => {
+router.post('/', asyncHandler((req, res) => {
     //bcrypt hash function adapted from https://medium.com/@mridu.sh92/a-quick-guide-for-authentication-using-bcrypt-on-express-nodejs-1d8791bb418f
     const saltRounds = 10;
     if (req.body.firstName && req.body.lastName && req.body.emailAddress && req.body.password) {
-        bcrypt.hashSync(req.body.password, saltRounds, async (err, hash) => {
+        bcrypt.hash(req.body.password, saltRounds, async (err, hash) => {
             // Store hash in your password DB.
             await models.User.create({
                 firstName: req.body.firstName,
