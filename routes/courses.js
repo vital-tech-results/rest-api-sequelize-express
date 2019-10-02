@@ -1,14 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const bodyParser = require('body-parser');
 const { models } = require('../db');
-const bcryptjs = require('bcryptjs');
+const authenticateUser = require('../auth');
 const methodOverride = require('method-override');
 
 router.use(methodOverride('_method'));
 //express.json as seen here https://teamtreehouse.com/library/create-a-new-quote
 router.use(express.json());
-
 
 /**adapted from https://teamtreehouse.com/library/refactor-with-express-middleware
  * global try / catch with async/await
@@ -49,7 +47,7 @@ router.get('/', asyncHandler(async (req, res) => {
 }));
 
 //POST /api/users 201 - Creates a course, sets the Location header to "/", and returns no content
-router.post('/', asyncHandler(async (req, res) => {
+router.post('/', authenticateUser, asyncHandler(async (req, res) => {
     if (req.body.title && req.body.description) {
         await models.Course.create({
             title: req.body.title,
@@ -60,7 +58,13 @@ router.post('/', asyncHandler(async (req, res) => {
         })
             .then(course => {
                 // use setHeader https://stackoverflow.com/questions/14943607/how-to-set-the-location-response-http-header-in-express-framework
-                res.setHeader('Location', `/courses/${course.id}`).res.status(201).end();
+                res.setHeader('Location', `/courses/${course.id}`);
+                res.status(201).end();
+            })
+            .catch(err => {
+                if (err.name === "SequelizeValidationError") {
+                    res.status(400).send(err.message).end();
+                }
             });
     } else {
         res.status(400).json({
@@ -85,7 +89,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
 }));
 
 // update course details
-router.put('/:id', asyncHandler(async (req, res) => {
+router.put('/:id', authenticateUser, asyncHandler(async (req, res) => {
     const course = await models.Course.findByPk(req.params.id);
     if (course) {
         await models.Course.update(
@@ -101,6 +105,11 @@ router.put('/:id', asyncHandler(async (req, res) => {
         )
             .then(course => {
                 res.status(204).end();
+            })
+            .catch(err => {
+                if (err.name === "SequelizeValidationError") {
+                    res.status(400).send(err.message).end();
+                }
             });
     } else {
         res.status(404).json({
@@ -110,11 +119,9 @@ router.put('/:id', asyncHandler(async (req, res) => {
 }));
 
 // delete course from database
-router.delete('/:id', asyncHandler(async (req, res) => {
+router.delete('/:id', authenticateUser, asyncHandler(async (req, res) => {
     const course = await models.Course.findByPk(req.params.id);
     if (course) {
-
-
         await models.Course.destroy({
             where: {
                 id: req.params.id
@@ -131,13 +138,3 @@ router.delete('/:id', asyncHandler(async (req, res) => {
 }));
 
 module.exports = router;
-
-/*
-                json({
-                    firstName: req.body.firstName,
-                    lastName: req.body.lastName,
-                    emailAddress: req.body.emailAddress,
-                    password: req.body.password
-                });
-
-                */

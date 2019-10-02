@@ -1,11 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const bodyParser = require('body-parser');
 const { models } = require('../db');
 const bcrypt = require('bcryptjs');
-const auth = require('basic-auth');
-const compare = require('tsscmp');
 const methodOverride = require('method-override');
+const authenticateUser = require('../auth');
+
 
 router.use(methodOverride('_method'));
 //express.json as seen here https://teamtreehouse.com/library/create-a-new-quote
@@ -28,52 +27,7 @@ const asyncHandler = (cb) => async (req, res, next) => {
         } else {
             next(err);
         }
-
     }
-};
-
-
-
-const authenticateUser =  (req, res, next) => {
-    let message = null;
-
-    // Get the user's credentials from the Authorization header.
-    const credentials = auth(req);
-
-
-
-        if (credentials) {
-            // Look for a user whose `emailAddress` matches the credentials `name` property.
-            const user =  models.User.findAll({
-                limit: 1,
-                where: {
-                    emailAddress: credentials.name,
-                    password: credentials.pass,
-                },
-
-            });
-
-            if (user) {
-                const authenticated = bcrypt.compareSync(credentials.pass, user.password);
-                if (authenticated) {
-                    console.log(`Authentication successful for emailAddress: ${user.emailAddress}`);
-                    req.currentUser = user;
-                } else {
-                    message = `Authentication failure for emailAddress: ${user.emailAddress}`;
-                }
-            } else {
-                message = `User not found for emailAddress: ${credentials.name}`;
-            }
-        } else {
-            message = 'Auth header not found';
-        }
-
-        if (message) {
-            console.warn(message);
-            res.status(401).json({ message: 'Access Denied' });
-        } else {
-            next();
-        }
 };
 
 /** ADAPTED FROM
@@ -111,11 +65,11 @@ DELETE /api/courses/:id
  */
 router.get('/', authenticateUser, (req, res) => {
     const user = req.currentUser;
-    res.send('ok from line 110').end();
-    // res.json({
-    //     name: user.name,
-    //     emailAddress: user.emailAddress,
-    // });
+    // res.send(user.name).end();
+    res.json({
+        name: user.firstName,
+        emailAddress: user.emailAddress,
+    }).end();
 
 });
 
@@ -135,11 +89,12 @@ router.post('/', asyncHandler((req, res) => {
             })
                 .then(user => {
                     res.status(201).end();
+                })
+                .catch(err => {
+                    if (err.name === "SequelizeValidationError") {
+                        res.status(400).send(err.message).end();
+                    }
                 });
-        });
-    } else {
-        res.status(400).json({
-            message: "First name is required. Last name is required. Email address is required. Password is required"
         });
     }
 }));
@@ -175,6 +130,11 @@ router.put('/:id', asyncHandler(async (req, res) => {
         )
             .then(user => {
                 res.status(204).end();
+            })
+            .catch(err => {
+                if (err.name === "SequelizeValidationError") {
+                    res.status(400).send(err.message).end();
+                }
             });
     } else {
         res.status(404).json({

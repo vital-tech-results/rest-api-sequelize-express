@@ -42,7 +42,7 @@ module.exports = (sequelize) => {
                 },
                 is: {
                     args: ["^[a-z]+$", 'i'],
-                    msg: 'first name must be only letters',
+                    msg: 'last name must be only letters',
                 },
             },
         },
@@ -83,7 +83,7 @@ module.exports = (sequelize) => {
         sequelize
 
     });
-    
+
     //generate hash
     User.generateHash = password => {
         return bcrypt.hashSync(password, bcrypt.genSaltSync(10), null);
