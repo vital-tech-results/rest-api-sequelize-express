@@ -3,30 +3,12 @@ const router = express.Router();
 const { models } = require('../db');
 const authenticateUser = require('../auth');
 const methodOverride = require('method-override');
+const asyncHandler = require('../asyncHandler');
+const auth = require('basic-auth');
 
 router.use(methodOverride('_method'));
 //express.json as seen here https://teamtreehouse.com/library/create-a-new-quote
 router.use(express.json());
-
-/**adapted from https://teamtreehouse.com/library/refactor-with-express-middleware
- * global try / catch with async/await
- * instead of having try/catch in every route below
- * this wraps the req,res callback in a try/catch block
- * and uses async/await as well
- */
-const asyncHandler = (cb) => async (req, res, next) => {
-    try {
-        await cb(req, res, next);
-    } catch (err) {
-        if (err.name === "SequelizeValidationError") {
-            res.status(400);
-            next(err);
-        } else {
-            next(err);
-        }
-
-    }
-};
 
 /** ADAPTED FROM
  * https://sequelize.readthedocs.io/en/1.7.0/articles/express/ 
@@ -45,10 +27,9 @@ router.get('/', asyncHandler(async (req, res) => {
             }
         });
 }));
-
 //POST /api/users 201 - Creates a course, sets the Location header to "/", and returns no content
 router.post('/', authenticateUser, asyncHandler(async (req, res) => {
-    if (req.body.title && req.body.description) {
+    if (req.body) {
         await models.Course.create({
             title: req.body.title,
             description: req.body.description,
@@ -61,22 +42,24 @@ router.post('/', authenticateUser, asyncHandler(async (req, res) => {
                 res.setHeader('Location', `/courses/${course.id}`);
                 res.status(201).end();
             })
-            .catch(err => {
-                if (err.name === "SequelizeValidationError") {
-                    res.status(400).send(err.message).end();
-                }
-            });
     } else {
         res.status(400).json({
             message: "Title is required. Description is required."
         });
     }
 }));
-
 // get course by primary key (pk) and display edit form
 router.get('/:id', asyncHandler(async (req, res) => {
     const id = req.params.id;
-    await models.Course.findByPk(id)
+    // await models.Course.findByPk(id)
+    await models.Course.findOne({
+        where: {
+            id: id
+        },
+        attributes: {
+            exclude: ['createdAt', 'updatedAt']
+        }
+    })
         .then(course => {
             if (course) {
                 res.json({ course: course });
@@ -90,49 +73,83 @@ router.get('/:id', asyncHandler(async (req, res) => {
 
 // update course details
 router.put('/:id', authenticateUser, asyncHandler(async (req, res) => {
+    // store user name and password
+    const credentials = auth(req);
+    /// get course by ID param in URL
     const course = await models.Course.findByPk(req.params.id);
-    if (course) {
-        await models.Course.update(
-            {
-                title: req.body.title,
-                description: req.body.description,
-                estimatedTime: req.body.estimatedTime,
-                materialsNeeded: req.body.materialsNeeded,
-                userId: req.body.userId,
-            },
-            { where: { id: req.params.id } },
-            { fields: ['title', 'description', 'estimatedTime', 'materialsNeeded', 'userId'] }
-        )
-            .then(course => {
-                res.status(204).end();
-            })
-            .catch(err => {
-                if (err.name === "SequelizeValidationError") {
-                    res.status(400).send(err.message).end();
-                }
+    const userId = course.userId;
+    // get user ID that is associated with the course from ID params
+    const getUser = await models.User.findByPk(userId);
+    const userEmailAddress = getUser.emailAddress;
+
+    // if the user who signed is is assocated with the course ID they can edit it
+    if (credentials.name === userEmailAddress) {
+        if (course) {
+            await models.Course.update(
+                {
+                    title: req.body.title,
+                    description: req.body.description,
+                    estimatedTime: req.body.estimatedTime,
+                    materialsNeeded: req.body.materialsNeeded,
+                    userId: req.body.userId,
+                },
+                { where: { id: req.params.id } },
+                { fields: ['title', 'description', 'estimatedTime', 'materialsNeeded', 'userId'] }
+            )
+                .then(course => {
+                    res.status(204).end();
+                })
+                .catch(err => {
+                    if (err.name === "SequelizeValidationError") {
+                        res.status(400).send(err.message).end();
+                    } else {
+                        next();
+                    }
+
+                });
+
+        } else {
+            res.status(400).json({
+                message: "Title and description are required"
             });
+        }
     } else {
-        res.status(404).json({
-            message: "The PUT request is not Not found"
+        res.status(403).json({
+            message: "You do not have authorization to edit this course."
         });
     }
 }));
 
 // delete course from database
 router.delete('/:id', authenticateUser, asyncHandler(async (req, res) => {
+    // store user name and password
+    const credentials = auth(req);
+    /// get course by ID param in URL
     const course = await models.Course.findByPk(req.params.id);
-    if (course) {
-        await models.Course.destroy({
-            where: {
-                id: req.params.id
-            }
-        })
-            .then(book => {
-                res.status(204).end();
+    const userId = course.userId;
+    // get user ID that is associated with the course from ID params
+    const getUser = await models.User.findByPk(userId);
+    const userEmailAddress = getUser.emailAddress;
+
+    // if the user who signed is is assocated with the course ID they can edit it
+    if (credentials.name === userEmailAddress) {
+        if (course) {
+            await models.Course.destroy({
+                where: {
+                    id: req.params.id
+                }
+            })
+                .then(course => {
+                    res.status(204).end();
+                });
+        } else {
+            res.status(404).json({
+                message: "The DELETE request is not Not found"
             });
+        }
     } else {
-        res.status(404).json({
-            message: "The DELETE request is not Not found"
+        res.status(403).json({
+            message: "You do not have authorization to DELETE this course."
         });
     }
 }));

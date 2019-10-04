@@ -1,7 +1,7 @@
+'use strict';
+
 const Sequelize = require('sequelize');
 const bcrypt = require('bcryptjs');
-
-'use strict';
 
 module.exports = (sequelize) => {
     class User extends Sequelize.Model { }
@@ -62,12 +62,15 @@ module.exports = (sequelize) => {
                     msg: 'Please provide a valid email address',
                 },
             },
+            // credit: https://stackoverflow.com/questions/16356856/sequelize-js-custom-validator-check-for-unique-username-password
+            unique: {
+                args: true,
+                msg: 'Email address already in use!'
+            }
         },
         password: {
             type: Sequelize.STRING,
             allowNull: false,
-            required: true,
-            len: [2, 20],
             validate: {
                 notNull: {
                     msg: 'Please provide a value for "password"',
@@ -78,20 +81,7 @@ module.exports = (sequelize) => {
             },
         },
 
-    }, {
-
-        sequelize
-
-    });
-
-    //generate hash
-    User.generateHash = password => {
-        return bcrypt.hashSync(password, bcrypt.genSaltSync(10), null);
-    };
-    //check if password is valid
-    User.prototype.validPassword = password => {
-        return bcrypt.compareSync(password, this.localPassword);
-    };
+    }, { sequelize });
 
     //associate with Course model
     User.associate = (models) => {

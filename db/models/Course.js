@@ -11,11 +11,6 @@ module.exports = (sequelize) => {
             primaryKey: true,
             autoIncrement: true,
         },
-        //(id from the Users table)
-        // userId: {
-        //     type: Sequelize.INTEGER,
-        //     foreignKey: true,
-        // },
         //(STRING)
         title: {
             type: Sequelize.STRING,
@@ -52,7 +47,7 @@ module.exports = (sequelize) => {
             type: Sequelize.STRING,
             allowNull: true,
         },
-
+       
     }, { sequelize });
 
     Course.associate = (models) => {
