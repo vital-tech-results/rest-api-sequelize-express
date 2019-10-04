@@ -9,7 +9,7 @@ const asyncHandler = (cb) => async (req, res, next) => {
         await cb(req, res, next);
     } catch (err) {
         if (err.name === "SequelizeValidationError") {
-            res.status(400);
+            res.status(400).send(err.message).end();
             next(err);
         } else {
             next(err);

@@ -107,11 +107,6 @@ router.put('/:id', asyncHandler(async (req, res) => {
             )
                 .then(user => {
                     res.status(204).end();
-                })
-                .catch(err => {
-                    if (err.name === "SequelizeValidationError") {
-                        res.status(400).send(err.message).end();
-                    }
                 });
         } else {
             res.status(400).send("password is required");

@@ -98,16 +98,7 @@ router.put('/:id', authenticateUser, asyncHandler(async (req, res) => {
             )
                 .then(course => {
                     res.status(204).end();
-                })
-                .catch(err => {
-                    if (err.name === "SequelizeValidationError") {
-                        res.status(400).send(err.message).end();
-                    } else {
-                        next();
-                    }
-
                 });
-
         } else {
             res.status(400).json({
                 message: "Title and description are required"
