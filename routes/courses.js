@@ -16,7 +16,15 @@ router.use(express.json());
  * */
 // get list of ALL users currently in database
 router.get('/', asyncHandler(async (req, res) => {
-    await models.Course.findAll({})
+    await models.Course.findAll({
+        attributes: {
+            exclude: ['createdAt', 'updatedAt'],
+
+        },
+        include: [{
+            model: models.User, attributes: ['emailAddress', 'firstName', 'lastName']
+        }]
+    })
         .then(course => {
             if (course) {
                 res.json({ course: course });
@@ -38,7 +46,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
         },
         attributes: {
             exclude: ['createdAt', 'updatedAt'],
-            
+
         },
         include: [{
             model: models.User, attributes: ['emailAddress', 'firstName', 'lastName']
