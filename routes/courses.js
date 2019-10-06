@@ -27,6 +27,34 @@ router.get('/', asyncHandler(async (req, res) => {
             }
         });
 }));
+
+// get course by primary key (pk) and display edit form
+router.get('/:id', asyncHandler(async (req, res) => {
+    const id = req.params.id;
+    // await models.Course.findByPk(id)
+    await models.Course.findOne({
+        where: {
+            id: id
+        },
+        attributes: {
+            exclude: ['createdAt', 'updatedAt'],
+            
+        },
+        include: [{
+            model: models.User, attributes: ['emailAddress', 'firstName', 'lastName']
+        }]
+    })
+        .then(course => {
+            if (course) {
+                res.json({ course: course });
+            } else {
+                res.status(404).json({
+                    message: "The get request is not Not found"
+                });
+            }
+        });
+}));
+
 //POST /api/users 201 - Creates a course, sets the Location header to "/", and returns no content
 router.post('/', authenticateUser, asyncHandler(async (req, res) => {
     if (req.body) {
@@ -48,28 +76,6 @@ router.post('/', authenticateUser, asyncHandler(async (req, res) => {
         });
     }
 }));
-// get course by primary key (pk) and display edit form
-router.get('/:id', asyncHandler(async (req, res) => {
-    const id = req.params.id;
-    // await models.Course.findByPk(id)
-    await models.Course.findOne({
-        where: {
-            id: id
-        },
-        attributes: {
-            exclude: ['createdAt', 'updatedAt']
-        }
-    })
-        .then(course => {
-            if (course) {
-                res.json({ course: course });
-            } else {
-                res.status(404).json({
-                    message: "The get request is not Not found"
-                });
-            }
-        });
-}));
 
 // update course details
 router.put('/:id', authenticateUser, asyncHandler(async (req, res) => {
@@ -85,29 +91,26 @@ router.put('/:id', authenticateUser, asyncHandler(async (req, res) => {
     // if the user who signed is is assocated with the course ID they can edit it
     if (credentials.name === userEmailAddress) {
         if (course) {
-            await models.Course.update(
-                {
-                    title: req.body.title,
-                    description: req.body.description,
-                    estimatedTime: req.body.estimatedTime,
-                    materialsNeeded: req.body.materialsNeeded,
-                    userId: req.body.userId,
-                },
-                { where: { id: req.params.id } },
-                { fields: ['title', 'description', 'estimatedTime', 'materialsNeeded', 'userId'] }
-            )
-                .then(course => {
-                    res.status(204).end();
-                });
-        } else {
-            res.status(400).json({
-                message: "Title and description are required"
-            });
+            if (!req.body.title || !req.body.description) {
+                res.status(400).send('Title and description are required').end();
+            } else {
+                await models.Course.update(
+                    {
+                        title: req.body.title,
+                        description: req.body.description,
+                        estimatedTime: req.body.estimatedTime,
+                        materialsNeeded: req.body.materialsNeeded,
+                        userId: req.body.userId,
+                    },
+                    { where: { id: req.params.id } },
+                    { fields: ['title', 'description', 'estimatedTime', 'materialsNeeded', 'userId'] }
+                )
+                    .then(course => {
+                        res.status(204).end();
+                    });
+
+            }
         }
-    } else {
-        res.status(403).json({
-            message: "You do not have authorization to edit this course."
-        });
     }
 }));
 

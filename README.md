@@ -2,9 +2,6 @@
 
 This project uses the popular `Express` web application framework and a `SQL database` to create a `REST API` that lets users create, list, update, and delete items from a library database.
 
-* [View live demo here]()
-
-
 ## Technologies used
 
 * SQLite3
@@ -44,6 +41,8 @@ npm start
 ```
 
 To test the Express server, browse to the URL [http://localhost:5000/](http://localhost:5000/).
+
+* View this application using a [local installation of Postman](https://www.getpostman.com/downloads/)
 
 ## Known Issues
 * No known issues at this time. Submit issues in this git repo

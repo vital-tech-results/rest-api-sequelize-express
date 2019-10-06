@@ -1,6 +1,7 @@
 /node_modules
 README-1.md
 /z-ignore
+.DS_Store
 
 # Logs
 logs
