@@ -19,7 +19,6 @@ router.get('/', asyncHandler(async (req, res) => {
     await models.Course.findAll({
         attributes: {
             exclude: ['createdAt', 'updatedAt'],
-
         },
         include: [{
             model: models.User, attributes: ['emailAddress', 'firstName', 'lastName']
@@ -46,7 +45,6 @@ router.get('/:id', asyncHandler(async (req, res) => {
         },
         attributes: {
             exclude: ['createdAt', 'updatedAt'],
-
         },
         include: [{
             model: models.User, attributes: ['emailAddress', 'firstName', 'lastName']
